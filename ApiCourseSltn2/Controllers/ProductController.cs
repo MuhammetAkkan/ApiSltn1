@@ -78,7 +78,7 @@ namespace ApiCourseSltn2.Controllers
             {
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
-                return Ok();
+                return CreatedAtAction(nameof(GetProducts), product);
             }
             catch (Exception ex)
             {
@@ -86,6 +86,35 @@ namespace ApiCourseSltn2.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Db den {id} ye sahip ürün silinemedi.\n {ex.Message}");
             }
 
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> UpdateProduct(int? id, Product updatedProduct)
+        {
+            if (id is null)
+                return BadRequest("Geçersiz veri");
+
+            var product = await _context.Products.FirstOrDefaultAsync(i=> i.ProductId == id);
+            
+            if (product is null)
+                return BadRequest("Bu ürün kayıtlı değil");
+
+            try
+            {
+                product.ProductId = updatedProduct.ProductId;
+                product.ProductName = updatedProduct.ProductName;
+                product.Price = updatedProduct.Price;
+                product.IsActive = updatedProduct.IsActive;
+
+                _context.Products.Update(product);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(GetProducts), product);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(statusCode:500, ex.Message);
+            }
         }
 
     }
