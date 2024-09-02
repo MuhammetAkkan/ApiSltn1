@@ -1,4 +1,5 @@
-﻿using ApiCourseSltn2.Models;
+﻿using ApiCourseSltn2.DTO;
+using ApiCourseSltn2.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,37 +20,51 @@ namespace ApiCourseSltn2.Controllers
         [HttpGet("GetProducts")]
         public async Task<IActionResult> GetProducts()
         {
-            var result = await _context.Products.ToListAsync();
+            //1.yöntem
+            //Where ifadesi sonrasında olur ise isActive e dair sorguyu yapamıyoruz ama ilk geldiğinde tüm productlar gelip dto ya basmadığımızdan isActive için olan filtrelemeyi yapabiliyoruz.
+
+            /*
+            var result = await _context.Products.Where(i=> i.IsActive == true).Select(item=> new ProductDTO  //burada i bize gelen nesneyi temsil etmekte onu başka bir nesne üzerine(DTO) ya basıyoruz ama sadece gerekli alanları
+            {
+                ProductId = item.ProductId,
+                ProductName = item.ProductName,
+                Price = item.Price
+            }).ToListAsync(); //data transfer object kullanarak orjinal product ı istediğimiz product versiyonunda sunduk.
+            */
             
-            if (result is null)
-                return NotFound(); //null olma durumunda 404 dönüyoruz.
-            
-            return Ok(result);
+
+            //2.yöntem ki en kullanışlısı bu
+
+            var result = await _context.Products.Where(i => i.IsActive == true).Select(product =>ProductToDTO(product)).ToListAsync();
+
+            return result.Any() ? Ok(result) : NotFound(); //result var mı sorgusundan sonra duruma göre uygun olan gerçekleşecek.
+            //True ise Ok(resut)
+            //False ise Notfound()
         }
 
-        [HttpGet("GetProduct{id}")]
+
+        [HttpGet("GetProduct/{id}")]
         public async Task<IActionResult> GetProduct(int? id)
         {
             if (id is null)
-                return NotFound();
+                return BadRequest();
 
-            var result = await _context.Products.FirstOrDefaultAsync(i => i.ProductId == id);
+            var result = await _context.Products.FindAsync(id);
             
-            if(result is null)
-                return NotFound();
-
-            return Ok(result);
+            return result is not null ? Ok(result) : NotFound();
         }
 
-        [HttpPost]
+
+        [HttpPost("CreateProduct")]
         public async Task<IActionResult> CreateProducts(Product? entity)
         {
             if(entity is null)
                 return BadRequest("Geçersiz veri!");
 
-            var product = await _context.Products.FirstOrDefaultAsync(i=> i.ProductName == entity.ProductName);
-            if (product is not null)
-                return BadRequest("Ürün zaten mevcut");
+            var product = await _context.Products.AnyAsync(i => i.ProductName == entity.ProductName); //uygunluk durumunu sorgularken any daha mantıklıdır. FirstOrDefault daha çok hepsinin içinden tara ve getir şeklinde işe yarar.
+            
+            if (product is true)
+                return NotFound("Ürün zaten mevcut");
 
             try
             {
@@ -64,21 +79,52 @@ namespace ApiCourseSltn2.Controllers
             }
         }
 
-        [HttpDelete]
+
+        [HttpPut("UpdateProduct/{id}")]
+        public async Task<IActionResult> UpdateProduct(int? id, Product updatedProduct)
+        {
+            if (id is null || id != updatedProduct.ProductId)
+                return BadRequest("Geçersiz veri");
+
+            var product = await _context.Products.FindAsync(id); //arasından arama ve getirme de ise FindAsync daha mantıklıdır.
+
+            if (product is null)
+                return NotFound("Bu ürün kayıtlı değil");
+
+            try
+            {
+                product.ProductName = updatedProduct.ProductName; 
+                product.Price = updatedProduct.Price;
+                product.IsActive = updatedProduct.IsActive;
+
+                //_context.Products.Update(product);
+                await _context.SaveChangesAsync();
+                return NoContent(); //eğer ki create değil ise NoContent yapıyoruz.
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(statusCode: 500, ex.Message);
+            }
+        }
+
+
+        [HttpDelete("DeleteProduct{id}")]
         public async Task<IActionResult> DeleteProduct(int? id)
         {
             if (id is null)
-                return BadRequest("Geçersiz veri");
+                return BadRequest("Geçersiz veri"); //BadRequest ler 400 lü hatalar için kullanılır, yani kullanıcı bazlı hataları temsil ederler.
 
-            var product = await _context.Products.FirstOrDefaultAsync(i => i.ProductId == id);
+            
+            var product = await _context.Products.FindAsync(id);
+            
             if(product is null)
-                return BadRequest("Bu ürün kayıtlı değil");
+                return NotFound("Bu ürün kayıtlı değil"); //kullanıcı doğru veri yanlış => NotFound();
 
             try
             {
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetProducts), product);
+                return NoContent();
             }
             catch (Exception ex)
             {
@@ -88,34 +134,18 @@ namespace ApiCourseSltn2.Controllers
 
         }
 
-        [HttpPut]
-        public async Task<IActionResult> UpdateProduct(int? id, Product updatedProduct)
+
+        //sadece bu classta çalışan, product ı ProductDTO ya basan bir metot tanımladık.
+        private static ProductDTO ProductToDTO(Product product)
         {
-            if (id is null)
-                return BadRequest("Geçersiz veri");
-
-            var product = await _context.Products.FirstOrDefaultAsync(i=> i.ProductId == id);
-            
-            if (product is null)
-                return BadRequest("Bu ürün kayıtlı değil");
-
-            try
+            return new ProductDTO
             {
-                product.ProductId = updatedProduct.ProductId;
-                product.ProductName = updatedProduct.ProductName;
-                product.Price = updatedProduct.Price;
-                product.IsActive = updatedProduct.IsActive;
-
-                _context.Products.Update(product);
-                await _context.SaveChangesAsync();
-
-                return CreatedAtAction(nameof(GetProducts), product);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(statusCode:500, ex.Message);
-            }
+                ProductId = product.ProductId,
+                ProductName = product.ProductName,
+                Price = product.Price,
+            };
         }
+        
 
     }
 }
