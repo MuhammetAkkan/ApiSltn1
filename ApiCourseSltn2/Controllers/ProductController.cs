@@ -27,7 +27,7 @@ namespace ApiCourseSltn2.Controllers
             return Ok(result);
         }
 
-        [HttpPost("GetProduct{id}")]
+        [HttpGet("GetProduct{id}")]
         public async Task<IActionResult> GetProduct(int? id)
         {
             if (id is null)
@@ -40,5 +40,53 @@ namespace ApiCourseSltn2.Controllers
 
             return Ok(result);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateProducts(Product? entity)
+        {
+            if(entity is null)
+                return BadRequest("Geçersiz veri!");
+
+            var product = await _context.Products.FirstOrDefaultAsync(i=> i.ProductName == entity.ProductName);
+            if (product is not null)
+                return BadRequest("Ürün zaten mevcut");
+
+            try
+            {
+                _context.Products.Add(entity);
+                await _context.SaveChangesAsync();
+                
+                return CreatedAtAction(nameof(GetProduct), new { id = entity.ProductId }, entity); //GetProduct api ye ürünü gönderiyoruz ve döndürüyoruz. Yine bu kısımda dönüyor ama bu kod ile eklemediğimiz entity i net bir şekilde api de görebiliyoruz. Ayrıca read e gitmemize gerek kalmıyor.
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Db ye kaydedilemedi{entity.ProductName} + {ex.Message}");
+            }
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteProduct(int? id)
+        {
+            if (id is null)
+                return BadRequest("Geçersiz veri");
+
+            var product = await _context.Products.FirstOrDefaultAsync(i => i.ProductId == id);
+            if(product is null)
+                return BadRequest("Bu ürün kayıtlı değil");
+
+            try
+            {
+                _context.Products.Remove(product);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Db den {id} ye sahip ürün silinemedi.\n {ex.Message}");
+            }
+
+        }
+
     }
 }
