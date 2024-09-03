@@ -1,9 +1,10 @@
 ﻿using ApiCourseSltn2.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApiCourseSltn2.Controllers
 {
-    public class ProductsContext : DbContext
+    public class ProductsContext : IdentityDbContext<AppUser, AppRole, int>
     {
         public DbSet<Product> Products { get; set; }
         public ProductsContext(DbContextOptions<ProductsContext> options) : base(options) //DbContextOption bir adet TContext almalı

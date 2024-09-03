@@ -61,7 +61,7 @@ namespace ApiCourseSltn2.Controllers
             if(entity is null)
                 return BadRequest("Geçersiz veri!");
 
-            var product = await _context.Products.AnyAsync(i => i.ProductName == entity.ProductName); //uygunluk durumunu sorgularken any daha mantıklıdır. FirstOrDefault daha çok hepsinin içinden tara ve getir şeklinde işe yarar.
+            var product = await _context.Products.AnyAsync(i => i.ProductName == entity.ProductName); //Var mı? durumunu sorgularken any daha mantıklıdır. FirstOrDefault daha çok hepsinin içinden tara ve getir şeklinde işe yarar.
             
             if (product is true)
                 return NotFound("Ürün zaten mevcut");
@@ -109,11 +109,8 @@ namespace ApiCourseSltn2.Controllers
 
 
         [HttpDelete("DeleteProduct{id}")]
-        public async Task<IActionResult> DeleteProduct(int? id)
+        public async Task<IActionResult> DeleteProduct(int id)
         {
-            if (id is null)
-                return BadRequest("Geçersiz veri"); //BadRequest ler 400 lü hatalar için kullanılır, yani kullanıcı bazlı hataları temsil ederler.
-
             
             var product = await _context.Products.FindAsync(id);
             
@@ -128,11 +125,10 @@ namespace ApiCourseSltn2.Controllers
             }
             catch (Exception ex)
             {
-
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Db den {id} ye sahip ürün silinemedi.\n {ex.Message}");
             }
 
-        }
+        }   
 
 
         //sadece bu classta çalışan, product ı ProductDTO ya basan bir metot tanımladık.
