@@ -6,6 +6,5 @@ namespace ApiCourseSltn2.Models
     {
         public string FullName { get; set; } = null!;
         public DateTime DateAdded { get; set; }
-
     }
 }
