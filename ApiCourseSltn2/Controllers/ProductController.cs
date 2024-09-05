@@ -1,5 +1,6 @@
 ﻿using ApiCourseSltn2.DTO;
 using ApiCourseSltn2.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,7 @@ namespace ApiCourseSltn2.Controllers
         }
 
 
+        [Authorize]
         [HttpGet("GetProduct/{id}")]
         public async Task<IActionResult> GetProduct(int? id)
         {
@@ -51,7 +53,7 @@ namespace ApiCourseSltn2.Controllers
 
             var result = await _context.Products.FindAsync(id);
             
-            return result is not null ? Ok(result) : NotFound();
+            return result is not null ? Ok(result) : NotFound("Bu Id ye ait ürün yok.");
         }
 
 

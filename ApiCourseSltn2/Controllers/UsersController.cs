@@ -118,7 +118,7 @@ namespace ApiCourseSltn2.Controllers
              * Encoding.ASCII.GetBytes => alınan/gelen(get) string anahtarı 
             */
             var key = Encoding.ASCII.GetBytes(_configuration.GetSection("AppSettings:Secret").Value ?? "");
-            
+
             //tokenDescriptor => token tanımlayıcı(kimlik)
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -139,6 +139,7 @@ namespace ApiCourseSltn2.Controllers
                 //JWT nin kimlik bilgilerini içerir. Yapısını ve şifrelenme türünü içerir.
                 //Önemli olarak SigningCredentials jwt güvenlidir, değiştirilmedi. Bu algoritma ve imza     ile de teyit ediyorum demektir. 
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256),
+                Issuer = "muhammetAkkan.com",
                 //SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256, "RS256") vb de kullanılabilirdi.
             };
 
