@@ -10,7 +10,26 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+//Add Serives
+var myCorsPolicy = "MyCorsPoliciy";
+
+//Add CORS => Microsoft
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: myCorsPolicy,
+                      policy =>
+                      {
+                          policy.WithOrigins("https://localhost:7145/",
+                                             "https://localhost:7033/",
+                                             "http://example2.com")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                      });
+});
+
+
+
+// Add services IdentityDdContext
 builder.Services.AddDbContext<ProductsContext>(connection => connection.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]));
 //BURASI
 
@@ -164,7 +183,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+
+
 app.UseAuthentication(); //JWT
+
+app.UseRouting();
+
+//Cors policy use Start
+app.UseCors(myCorsPolicy);
+//Cors policy use End
+
 app.UseAuthorization();
 
 app.MapControllers();

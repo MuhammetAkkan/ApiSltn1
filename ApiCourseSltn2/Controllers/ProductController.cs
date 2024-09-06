@@ -36,9 +36,9 @@ namespace ApiCourseSltn2.Controllers
 
             //2.yöntem ki en kullanışlısı bu
 
-            var result = await _context.Products.Where(i => i.IsActive == true).Select(product =>ProductToDTO(product)).ToListAsync();
+            var products = await _context.Products.Where(i => i.IsActive == true).Select(product =>ProductToDTO(product)).ToListAsync();
 
-            return result.Any() ? Ok(result) : NotFound(); //result var mı sorgusundan sonra duruma göre uygun olan gerçekleşecek.
+            return products.Any() ? Ok(products) : NotFound(); //result var mı sorgusundan sonra duruma göre uygun olan gerçekleşecek.
             //True ise Ok(resut)
             //False ise Notfound()
         }
